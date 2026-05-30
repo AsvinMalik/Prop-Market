@@ -35,7 +35,6 @@ const HomeAuthenticated = () => {
   const [selectedType, setSelectedType] = useState('All');
   const [priceRange, setPriceRange] = useState([MIN_BUDGET, MAX_BUDGET]);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const [showHeroImage, setShowHeroImage] = useState(true);
   const [searchMode, setSearchMode] = useState<SearchMode>('buy');
   const [selectedCity, setSelectedCity] = useState('Rohtak');
   const [hasSelectedCity, setHasSelectedCity] = useState(false);
@@ -97,16 +96,9 @@ const HomeAuthenticated = () => {
     <div className="app-shell pb-32">
       <DisclaimerTicker />
       <header
-        className={`${showHeroImage ? '' : 'hero-gradient '}relative overflow-hidden border-b border-white/10 text-white shadow-[0_12px_40px_rgba(15,23,42,0.18)]`}
+        className="relative overflow-hidden border-b border-white/10 bg-cover bg-center text-white shadow-[0_12px_40px_rgba(15,23,42,0.18)]"
+        style={{ backgroundImage: `url(${DASHBOARD_HERO_IMAGE})` }}
       >
-        {showHeroImage && (
-          <img
-            src={DASHBOARD_HERO_IMAGE}
-            alt="Dashboard hero"
-            className="absolute inset-0 h-full w-full object-cover"
-            onError={() => setShowHeroImage(false)}
-          />
-        )}
         <div className="absolute inset-0 bg-gradient-to-r from-slate-950/58 via-slate-950/28 to-slate-950/18" />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/34 via-slate-950/8 to-slate-950/0" />
 

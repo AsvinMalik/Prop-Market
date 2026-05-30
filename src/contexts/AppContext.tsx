@@ -269,7 +269,7 @@ export const useApp = () => {
 
 export const AppProvider = ({ children }: { children: ReactNode }) => {
   const { user, isAuthenticated, isMockAuth } = useAuth();
-  const [properties, setProperties] = useState<Property[]>([]);
+  const [properties, setProperties] = useState<Property[]>(fallbackProperties);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [wishlist, setWishlist] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -277,7 +277,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [verificationRequestCounts, setVerificationRequestCounts] = useState<
     Record<string, number>
   >({});
-  const [isLoadingProperties, setIsLoadingProperties] = useState(true);
+  const [isLoadingProperties, setIsLoadingProperties] = useState(false);
 
   const refreshProperties = async () => {
     setIsLoadingProperties(true);

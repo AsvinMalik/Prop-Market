@@ -31,7 +31,6 @@ const Home = () => {
   const { properties } = useApp();
   const { isAuthenticated, setShowLoginModal } = useAuth();
   const [activeCategory, setActiveCategory] = useState('All');
-  const [showHeaderImage, setShowHeaderImage] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [appliedSearchQuery, setAppliedSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
@@ -136,16 +135,9 @@ const Home = () => {
     <div className="app-shell pb-16">
       <DisclaimerTicker />
       <header
-        className={`${showHeaderImage ? '' : 'hero-gradient '}relative overflow-hidden border-b border-white/10 text-white shadow-[0_12px_40px_rgba(15,23,42,0.18)]`}
+        className="relative overflow-hidden border-b border-white/10 bg-cover bg-center text-white shadow-[0_12px_40px_rgba(15,23,42,0.18)]"
+        style={{ backgroundImage: `url(${DASHBOARD_HERO_IMAGE})` }}
       >
-        {showHeaderImage && (
-          <img
-            src={DASHBOARD_HERO_IMAGE}
-            alt="Dashboard hero"
-            className="absolute inset-0 h-full w-full object-cover"
-            onError={() => setShowHeaderImage(false)}
-          />
-        )}
         <div className="absolute inset-0 bg-gradient-to-r from-slate-950/58 via-slate-950/28 to-slate-950/18" />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/34 via-slate-950/8 to-slate-950/0" />
 
