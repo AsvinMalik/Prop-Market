@@ -26,7 +26,7 @@ function App() {
   return (
     <AuthProvider>
       <AppProvider>
-        <BrowserRouter>
+        <BrowserRouter basename={import.meta.env.BASE_URL}>
           <Routes>
             <Route path="/" element={<Splash />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
