@@ -33,29 +33,37 @@ export const getMarketRate = async (locality: string): Promise<MarketRate | null
     return null;
   }
 
-  const { data, error } = await supabase
-    .from('market_rates')
-    .select('locality, min_price, max_price, unit, notes')
-    .ilike('locality', normalizedLocality)
-    .maybeSingle();
+  try {
+    const { data, error } = await supabase
+      .from('market_rates')
+      .select('locality, min_price, max_price, unit, notes')
+      .ilike('locality', normalizedLocality)
+      .maybeSingle();
 
-  if (error) {
+    if (error) {
+      return (
+        fallbackMarketRates.find(
+          (rate) => normalizeLocalityValue(rate.locality) === normalizeLocalityValue(normalizedLocality)
+        ) || null
+      );
+    }
+
+    if (!data) {
+      return null;
+    }
+
+    return {
+      locality: data.locality as string,
+      min_price: Number(data.min_price),
+      max_price: Number(data.max_price),
+      unit: data.unit as string,
+      notes: (data.notes as string | null | undefined) ?? null,
+    };
+  } catch {
     return (
       fallbackMarketRates.find(
         (rate) => normalizeLocalityValue(rate.locality) === normalizeLocalityValue(normalizedLocality)
       ) || null
     );
   }
-
-  if (!data) {
-    return null;
-  }
-
-  return {
-    locality: data.locality as string,
-    min_price: Number(data.min_price),
-    max_price: Number(data.max_price),
-    unit: data.unit as string,
-    notes: (data.notes as string | null | undefined) ?? null,
-  };
 };

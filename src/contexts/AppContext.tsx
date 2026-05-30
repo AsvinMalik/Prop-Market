@@ -228,16 +228,20 @@ const persistLocalProperties = (properties: Property[]) => {
 };
 
 const fetchSupabaseProperties = async (): Promise<Property[]> => {
-  const { data, error } = await supabase
-    .from('properties')
-    .select('*')
-    .order('created_at', { ascending: false });
+  try {
+    const { data, error } = await supabase
+      .from('properties')
+      .select('*')
+      .order('created_at', { ascending: false });
 
-  if (error || !data?.length) {
+    if (error || !data?.length) {
+      return [];
+    }
+
+    return data.map((row) => mapPropertyRow(row as Record<string, unknown>));
+  } catch {
     return [];
   }
-
-  return data.map((row) => mapPropertyRow(row as Record<string, unknown>));
 };
 
 const fetchFirebaseProperties = async (): Promise<Property[]> => {
@@ -283,7 +287,13 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       // Fall back to the existing Supabase source if Firestore is not ready yet.
     }
 
-    const supabaseProperties = await fetchSupabaseProperties();
+    let supabaseProperties: Property[] = [];
+
+    try {
+      supabaseProperties = await fetchSupabaseProperties();
+    } catch {
+      supabaseProperties = [];
+    }
 
     if (!supabaseProperties.length) {
       setProperties([...localProperties, ...fallbackProperties]);

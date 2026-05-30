@@ -21,7 +21,7 @@ const Splash = () => {
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-950 animate-fade-in">
       <img
-        src="/WhatsApp_Image_2026-03-19_at_7.43.34_PM.jpeg"
+        src={`${import.meta.env.BASE_URL}WhatsApp_Image_2026-03-19_at_7.43.34_PM.jpeg`}
         alt="City skyline"
         className="absolute inset-0 h-full w-full object-cover"
       />
