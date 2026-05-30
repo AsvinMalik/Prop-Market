@@ -5,19 +5,32 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+firebase-debug.log
 
-node_modules
-dist
-dist-ssr
+node_modules/
+dist/
+dist-ssr/
+build/
+coverage/
+
+.env
+.env.*
+!.env.example
 *.local
 
 .vscode/*
 !.vscode/extensions.json
-.idea
+.idea/
 .DS_Store
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
-.env
+
+*.tsbuildinfo
+.eslintcache
+.stylelintcache
+.vite/
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
