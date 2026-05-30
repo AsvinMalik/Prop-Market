@@ -1,0 +1,16 @@
+export const HARYANA_CITY_OPTIONS = [
+  'Rohtak',
+  'All Haryana Cities',
+  'Ambala',
+  'Bahadurgarh',
+  'Faridabad',
+  'Gurugram',
+  'Hisar',
+  'Karnal',
+  'Kurukshetra',
+  'Panipat',
+  'Panchkula',
+  'Sirsa',
+  'Sonipat',
+  'Yamunanagar',
+] as const;
