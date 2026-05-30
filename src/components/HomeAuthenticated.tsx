@@ -23,7 +23,7 @@ const residentialTypes = ['All', 'Plot', 'House', 'Flat', 'Builder Floor'];
 const categories = ['All', 'Agricultural', 'Residential', 'Commercial'];
 const MIN_BUDGET = 500000;
 const MAX_BUDGET = 200000000;
-const DASHBOARD_HERO_IMAGE = '/dashboard-hero.png';
+const DASHBOARD_HERO_IMAGE = `${import.meta.env.BASE_URL}dashboard-hero.png`;
 
 const HomeAuthenticated = () => {
   const navigate = useNavigate();
@@ -94,7 +94,7 @@ const HomeAuthenticated = () => {
   };
 
   return (
-    <div className="app-shell pb-32 pt-12">
+    <div className="app-shell pb-32">
       <DisclaimerTicker />
       <header
         className={`${showHeroImage ? '' : 'hero-gradient '}relative overflow-hidden border-b border-white/10 text-white shadow-[0_12px_40px_rgba(15,23,42,0.18)]`}

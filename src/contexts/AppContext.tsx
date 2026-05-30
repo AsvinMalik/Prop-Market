@@ -12,8 +12,8 @@ import {
   where,
 } from 'firebase/firestore';
 import { useAuth } from './AuthContext';
-import { firebaseDb } from '../lib/firebase';
-import { supabase } from '../lib/supabase';
+import { firebaseDb, hasFirebaseConfig } from '../lib/firebase';
+import { hasSupabaseConfig, supabase } from '../lib/supabase';
 
 export interface Property {
   id: string;
@@ -228,6 +228,10 @@ const persistLocalProperties = (properties: Property[]) => {
 };
 
 const fetchSupabaseProperties = async (): Promise<Property[]> => {
+  if (!hasSupabaseConfig) {
+    return [];
+  }
+
   try {
     const { data, error } = await supabase
       .from('properties')
@@ -245,6 +249,10 @@ const fetchSupabaseProperties = async (): Promise<Property[]> => {
 };
 
 const fetchFirebaseProperties = async (): Promise<Property[]> => {
+  if (!hasFirebaseConfig) {
+    return [];
+  }
+
   const propertiesQuery = query(collection(firebaseDb, 'properties'), orderBy('createdAt', 'desc'));
   const snapshot = await getDocs(propertiesQuery);
 
@@ -307,6 +315,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const refreshVerificationRequestCounts = async () => {
+    if (!hasFirebaseConfig) {
+      setVerificationRequestCounts(fallbackVerificationRequestCounts);
+      return;
+    }
+
     try {
       const snapshot = await getDocs(collection(firebaseDb, 'verification_requests'));
       const counts = snapshot.docs.reduce<Record<string, number>>((result, verificationDoc) => {
@@ -336,6 +349,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
 
     try {
+      if (!hasFirebaseConfig) {
+        setWishlist([]);
+        return;
+      }
+
       const wishlistQuery = query(
         collection(firebaseDb, 'wishlists'),
         where('userId', '==', user.id)
@@ -375,8 +393,13 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     );
 
     if (isWishlisted) {
-      try {
-        await deleteDoc(doc(firebaseDb, 'wishlists', `${user.id}_${id}`));
+    try {
+      if (!hasFirebaseConfig) {
+        await refreshWishlist();
+        return;
+      }
+
+      await deleteDoc(doc(firebaseDb, 'wishlists', `${user.id}_${id}`));
       } catch {
         await refreshWishlist();
       }
@@ -384,6 +407,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
 
     try {
+      if (!hasFirebaseConfig) {
+        await refreshWishlist();
+        return;
+      }
+
       await setDoc(doc(firebaseDb, 'wishlists', `${user.id}_${id}`), {
         userId: user.id,
         propertyId: id,
@@ -404,6 +432,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }));
 
     try {
+      if (!hasFirebaseConfig) {
+        await refreshVerificationRequestCounts();
+        return;
+      }
+
       await setDoc(doc(firebaseDb, 'verification_requests', `${id}_${user.id}`), {
         propertyId: id,
         requesterId: user.id,
@@ -466,6 +499,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     };
 
     try {
+      if (!hasFirebaseConfig) {
+        return saveLocalProperty();
+      }
+
       const docRef = await addDoc(collection(firebaseDb, 'properties'), payload);
       const nextProperty = mapFirebaseProperty(docRef.id, payload as unknown as Record<string, unknown>);
       setProperties((currentProperties) => [nextProperty, ...currentProperties]);
@@ -488,6 +525,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       market_price: Math.round(input.price * 0.96),
       government_rate: Math.round(input.price * 0.92),
     };
+
+    if (!hasSupabaseConfig) {
+      return saveLocalProperty();
+    }
 
     const { data, error } = await supabase
       .from('properties')

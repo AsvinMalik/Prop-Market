@@ -10,7 +10,7 @@ const tickerItems = [...disclaimers, ...disclaimers];
 
 const DisclaimerTicker = () => {
   return (
-    <div className="fixed inset-x-0 top-0 z-[55] border-b border-amber-300/90 bg-amber-50/96 text-slate-900 shadow-[0_10px_28px_rgba(15,23,42,0.16)] backdrop-blur-xl">
+    <div className="sticky top-0 z-[55] border-b border-amber-300/90 bg-amber-50/96 text-slate-900 shadow-[0_10px_28px_rgba(15,23,42,0.16)] backdrop-blur-xl">
       <div className="flex items-center gap-3 overflow-hidden px-4 py-2.5">
         <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700">
           <AlertTriangle className="h-4 w-4" />

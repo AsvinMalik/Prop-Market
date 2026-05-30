@@ -23,7 +23,7 @@ const categories = ['All', 'Agricultural', 'Residential', 'Commercial'];
 const GUEST_SEARCH_LIMIT = 3;
 const MIN_BUDGET = 500000;
 const MAX_BUDGET = 200000000;
-const DASHBOARD_HERO_IMAGE = '/dashboard-hero.png';
+const DASHBOARD_HERO_IMAGE = `${import.meta.env.BASE_URL}dashboard-hero.png`;
 const formatBudgetInCrores = (value: number) => `₹${(value / 10000000).toFixed(1)} Cr`;
 
 const Home = () => {
@@ -133,7 +133,7 @@ const Home = () => {
     'rounded-3xl border border-white/15 bg-slate-950/22 p-5 text-sm text-white shadow-[0_18px_40px_rgba(15,23,42,0.18)] backdrop-blur-md';
 
   return (
-    <div className="app-shell pb-16 pt-12">
+    <div className="app-shell pb-16">
       <DisclaimerTicker />
       <header
         className={`${showHeaderImage ? '' : 'hero-gradient '}relative overflow-hidden border-b border-white/10 text-white shadow-[0_12px_40px_rgba(15,23,42,0.18)]`}
