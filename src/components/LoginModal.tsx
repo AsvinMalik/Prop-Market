@@ -114,6 +114,7 @@ const LoginModal = () => {
       setLoading(true);
       setErrorMessage('');
       await loginWithGoogle();
+      navigate('/home-auth');
     } catch (error) {
       setLoading(false);
       setErrorMessage(
