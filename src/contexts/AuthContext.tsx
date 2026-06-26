@@ -1,14 +1,10 @@
 import { createContext, useContext, useEffect, useMemo, useState, ReactNode } from 'react';
 import {
   User as FirebaseAuthUser,
-  createUserWithEmailAndPassword,
-  onAuthStateChanged,
-  signInWithEmailAndPassword,
-  signInWithPopup,
   signOut,
 } from 'firebase/auth';
-import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
-import { firebaseAuth, firebaseDb, googleAuthProvider } from '../lib/firebase';
+import { doc, updateDoc } from 'firebase/firestore';
+import { firebaseAuth, firebaseDb } from '../lib/firebase';
 
 export type UserRole = 'buyer' | 'seller';
 export type VerificationStatus = 'unverified' | 'ai_checked' | 'pending' | 'verified';
@@ -66,8 +62,9 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const MOCK_AUTH_STORAGE_KEY = 'propmarket_mock_auth_user';
-const isPhoneOtpEnabled = import.meta.env.VITE_ENABLE_PHONE_OTP === 'true';
-const isMockPhoneOtpEnabled = import.meta.env.VITE_ENABLE_MOCK_PHONE_OTP === 'true';
+const isDemoAuthEnabled = true;
+const isPhoneOtpEnabled = false;
+const isMockPhoneOtpEnabled = true;
 
 const toUserRoleArray = (roles: unknown): UserRole[] => {
   if (!Array.isArray(roles)) {
@@ -89,55 +86,20 @@ const getOnboardingStep = (user: User | null): OnboardingStep => {
   return 'profile-setup';
 };
 
-const mapAuthErrorMessage = (error: unknown, fallbackMessage: string) => {
-  const message = error instanceof Error ? error.message : fallbackMessage;
-  const normalizedMessage = message.toLowerCase();
-
-  if (normalizedMessage.includes('popup closed')) {
-    return 'The sign-in popup was closed before completing login.';
-  }
-
-  if (normalizedMessage.includes('email-already-in-use')) {
-    return 'An account with this email already exists. Try logging in instead.';
-  }
-
-  if (normalizedMessage.includes('invalid-credential') || normalizedMessage.includes('wrong-password')) {
-    return 'Invalid email or password.';
-  }
-
-  if (normalizedMessage.includes('user-not-found')) {
-    return 'No account exists for this email address yet.';
-  }
-
-  if (normalizedMessage.includes('operation-not-allowed')) {
-    return 'This login method is not enabled in Firebase Authentication yet.';
-  }
-
-  return message;
-};
-
-const normalizeProfile = (
-  authUser: FirebaseAuthUser,
-  profile: Record<string, unknown> | null
-): User => {
-  const identityVerificationStatus =
-    (profile?.identity_verification_status as VerificationStatus | undefined) || 'unverified';
-
+const createDemoUser = (overrides: Partial<User> = {}): User => {
   return {
-    id: authUser.uid,
-    phone: (profile?.phone as string | undefined) || authUser.phoneNumber || '',
-    email: (profile?.email as string | undefined) || authUser.email || undefined,
-    name: profile?.name as string | undefined,
-    city: profile?.city as string | undefined,
-    roles: toUserRoleArray(profile?.roles),
-    profileImage: profile?.profile_image as string | undefined,
-    verified:
-      (profile?.verified as boolean | undefined) ?? identityVerificationStatus === 'verified',
-    onboardingCompleted: (profile?.onboarding_completed as boolean | undefined) ?? false,
-    onboardingDismissed: (profile?.onboarding_dismissed as boolean | undefined) ?? false,
-    identityVerificationStatus,
-    propertyDocumentStatus:
-      (profile?.property_document_status as VerificationStatus | undefined) || 'unverified',
+    id: 'demo-user',
+    phone: '+919876543210',
+    email: 'demo@propmarket.local',
+    name: 'Demo User',
+    city: 'Rohtak',
+    roles: ['buyer', 'seller'],
+    verified: true,
+    onboardingCompleted: true,
+    onboardingDismissed: false,
+    identityVerificationStatus: 'verified',
+    propertyDocumentStatus: 'ai_checked',
+    ...overrides,
   };
 };
 
@@ -188,136 +150,63 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [onboardingStep, setOnboardingStep] = useState<OnboardingStep>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
 
-  const syncUserFromSession = async (authUser: FirebaseAuthUser | null) => {
-    if (!authUser) {
-      setUser(null);
-      setOnboardingStep(null);
-      persistMockUser(null);
-      return;
-    }
-
-    const profileRef = doc(firebaseDb, 'profiles', authUser.uid);
-    const profileSnapshot = await getDoc(profileRef);
-    const existingProfile = profileSnapshot.exists()
-      ? (profileSnapshot.data() as Record<string, unknown>)
-      : null;
-
-    const profilePayload =
-      existingProfile ||
-      {
-        phone: authUser.phoneNumber || '',
-        email: authUser.email || '',
-        roles: [],
-        verified: false,
-        onboarding_completed: false,
-        onboarding_dismissed: false,
-        identity_verification_status: 'unverified',
-        property_document_status: 'unverified',
-      };
-
-    if (!existingProfile) {
-      await setDoc(profileRef, profilePayload);
-    }
-
-    const nextUser = normalizeProfile(authUser, profilePayload);
-    setUser(nextUser);
-    setOnboardingStep(getOnboardingStep(nextUser));
-    persistMockUser(null);
-  };
-
   const hydrateMockUser = () => {
-    const mockUser = isMockPhoneOtpEnabled ? readMockUser() : null;
+    const mockUser = readMockUser();
     setUser(mockUser);
     setOnboardingStep(getOnboardingStep(mockUser));
   };
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(firebaseAuth, (nextUser) => {
-      setSession(nextUser);
-
-      if (nextUser) {
-        void syncUserFromSession(nextUser);
-      } else {
-        hydrateMockUser();
-      }
-
-      setIsAuthLoading(false);
-    });
-
-    return () => {
-      unsubscribe();
-    };
+    hydrateMockUser();
+    setSession(null);
+    setIsAuthLoading(false);
   }, []);
 
   const sendPhoneOtp = async (_phone: string) => {
-    if (!canUsePhoneOtp) {
-      throw new Error(
-        'Phone OTP is disabled for this deployment. Continue with email or Google login.'
-      );
-    }
-
-    if (isMockPhoneOtpEnabled && !isPhoneOtpEnabled) {
+    if (isDemoAuthEnabled) {
       return;
     }
 
-    throw new Error('Firebase phone authentication is not wired yet. Use email or Google login.');
+    throw new Error('Demo login is enabled for this deployment.');
   };
 
   const verifyPhoneOtp = async (phone: string, _otp: string) => {
-    if (isMockPhoneOtpEnabled && !isPhoneOtpEnabled) {
-      const formattedPhone = phone.startsWith('+') ? phone : `+91${phone}`;
-      const mockUser: User = {
-        id: `mock-${phone}`,
-        phone: formattedPhone,
-        roles: [],
-        verified: false,
-        onboardingCompleted: false,
-        onboardingDismissed: false,
-        identityVerificationStatus: 'unverified',
-        propertyDocumentStatus: 'unverified',
-      };
+    const formattedPhone = phone.startsWith('+') ? phone : `+91${phone || '9876543210'}`;
+    const mockUser = createDemoUser({ phone: formattedPhone });
 
-      persistMockUser(mockUser);
-      setSession(null);
-      setUser(mockUser);
-      setOnboardingStep(getOnboardingStep(mockUser));
-      setShowLoginModal(false);
-      return;
-    }
-
-    throw new Error('Firebase phone authentication is not wired yet. Use email or Google login.');
+    persistMockUser(mockUser);
+    setSession(null);
+    setUser(mockUser);
+    setOnboardingStep(getOnboardingStep(mockUser));
+    setShowLoginModal(false);
   };
 
   const loginWithEmail = async (email: string, password: string) => {
-    try {
-      await signInWithEmailAndPassword(firebaseAuth, email, password);
-      setShowLoginModal(false);
-    } catch (error) {
-      throw new Error(
-        mapAuthErrorMessage(error, 'Unable to sign in with email and password.')
-      );
-    }
+    const mockUser = createDemoUser({
+      email: email || 'demo@propmarket.local',
+      name: email ? email.split('@')[0] : 'Demo User',
+    });
+
+    persistMockUser(mockUser);
+    setSession(null);
+    setUser(mockUser);
+    setOnboardingStep(getOnboardingStep(mockUser));
+    setShowLoginModal(false);
   };
 
   const signUpWithEmail = async (email: string, password: string) => {
-    try {
-      await createUserWithEmailAndPassword(firebaseAuth, email, password);
-      setShowLoginModal(false);
-      return { needsEmailConfirmation: false };
-    } catch (error) {
-      throw new Error(
-        mapAuthErrorMessage(error, 'Unable to create your account with email and password.')
-      );
-    }
+    await loginWithEmail(email, password);
+    return { needsEmailConfirmation: false };
   };
 
   const loginWithGoogle = async () => {
-    try {
-      await signInWithPopup(firebaseAuth, googleAuthProvider);
-      setShowLoginModal(false);
-    } catch (error) {
-      throw new Error(mapAuthErrorMessage(error, 'Unable to continue with Google.'));
-    }
+    const mockUser = createDemoUser();
+
+    persistMockUser(mockUser);
+    setSession(null);
+    setUser(mockUser);
+    setOnboardingStep(getOnboardingStep(mockUser));
+    setShowLoginModal(false);
   };
 
   const updateProfile = async (changes: Record<string, unknown>) => {
@@ -325,7 +214,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
 
-    if (isMockPhoneOtpEnabled && !session) {
+    if (!session) {
       const nextUser = {
         ...user,
         phone: (changes.phone as string | undefined) ?? user.phone,
